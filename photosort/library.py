@@ -668,6 +668,29 @@ class Library:
         conn.commit()
 
     @_tx
+    @_tx
+    def rebuild_similar_groups(self) -> int:
+        """Re-detect near-duplicates over the whole library from scratch (hash rules, then CLIP pairs).
+
+        Forgets user choices in groups ("keep this one", "not a duplicate"); use it after those
+        choices went wrong or after changing the thresholds. Returns the number of groups."""
+        conn = self.catalog.connect()
+        conn.execute("DELETE FROM photo_similar")
+        conn.execute("DELETE FROM similar_groups")
+        conn.execute("UPDATE photos SET hidden=0")
+        tree, touched = BKTree(), set()
+        shas = [r[0] for r in conn.execute("SELECT sha256 FROM photos WHERE phash IS NOT NULL ORDER BY taken_at, sha256")]
+        for sha in shas:  # same order-independent union as at import time
+            photo = self._photo(conn, sha)
+            self._link_similar(conn, photo, tree, touched)
+            tree.add(int(photo["phash"], 16), sha)
+        if self.clip_engine.available():
+            for a, b in self.learner.similar_pairs(conn, shas):
+                self._union(conn, a, b, "burst", touched)
+        self._refresh_groups(conn, touched)
+        return conn.execute("SELECT COUNT(*) FROM similar_groups").fetchone()[0]
+
+    @_tx
     def set_group_best(self, gid: int, sha: str) -> None:
         conn = self.catalog.connect()
         if self._group_of(conn, sha) != gid:

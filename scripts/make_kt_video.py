@@ -269,7 +269,7 @@ def rec_library(ch: Chapter, cards: Path):
     ch.until(7)
     ch.click('.f-val:has-text("White House visit")')
     ch.until(13)
-    ch.click('.f-val:has-text("Goa trip")', nth=1)  # the 20 Dec day: it holds the photo with a WhatsApp copy
+    ch.click('.f-val:has-text("All photos")')
     p.wait_for_selector(".tile:has(.tag.left)", timeout=10000)
     ch.until(17)
     ch.click(".tile:has(.tag.left)")  # the photo that also arrived as a WhatsApp copy
@@ -288,7 +288,8 @@ def rec_duplicates(ch: Chapter, cards: Path):
     ch.nav("dupes")
     p.wait_for_selector("#groups .group")
     ch.until(10)
-    p.locator("#groups .group").nth(1).scroll_into_view_if_needed()
+    if p.locator("#groups .group").count() > 1:
+        p.locator("#groups .group").nth(1).scroll_into_view_if_needed()
     ch.until(17)
     ch.click("#groups .group .member .tile", nth=1)
     ch.until(24)
@@ -328,7 +329,13 @@ def rec_events(ch: Chapter, cards: Path):
     p.wait_for_selector('.f-val:has-text("Goa trip")')
     ch.click('.f-val:has-text("Goa trip")')
     ch.until(29)
-    api(DEMO + "/api/settings", {"event_gap_hours": 6})  # restore the demo library quietly
+    # Restore the demo library quietly: the gap, and the name of the day-event the re-split creates.
+    api(DEMO + "/api/settings", {"event_gap_hours": 6})
+    for f in api(DEMO + "/api/factors") or []:
+        if f["key"] == "events":
+            for v in f["values"]:
+                if v["label"].startswith("Calangute"):
+                    api(f"{DEMO}/api/events/{v['id']}/name", {"name": "Goa trip"})
 
 
 def rec_content(ch: Chapter, cards: Path):
@@ -477,7 +484,6 @@ def main() -> None:
         durations[key] = [say(text, work / f"{key}-{i}.wav") for i, text in enumerate(parts)]
     print("  total narration %.0f s" % sum(sum(d) for d in durations.values()), flush=True)
 
-    segments, chapters_txt, cursor = [], [], 0.0
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
@@ -508,14 +514,22 @@ def main() -> None:
                                 "-map", "0:v:0", "-map", "1:a:0", "-vf", f"scale={W}:{H}:flags=lanczos,fps=30,format=yuv420p",
                                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
                                 "-af", "apad", "-shortest", "-movflags", "+faststart", str(seg)], check=True)
-                segments.append(seg)
-                chapters_txt.append(f"{int(cursor // 60):02d}:{int(cursor % 60):02d}  {title}")
-                cursor += length
             browser.close()
     finally:
         if fresh:
             fresh.terminate()
 
+    # Assemble every chapter segment present, in order, so one chapter can be re-recorded with --only.
+    ffprobe = shutil.which("ffprobe")
+    segments, chapters_txt, cursor = [], [], 0.0
+    for key, title, _ in CHAPTERS:
+        seg = work / f"{key}.mp4"
+        if not seg.exists():
+            continue
+        segments.append(seg)
+        chapters_txt.append(f"{int(cursor // 60):02d}:{int(cursor % 60):02d}  {title}")
+        cursor += float(subprocess.run([ffprobe, "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(seg)],
+                                       capture_output=True, text=True).stdout.strip() or 0) if ffprobe else 0
     lst = work / "segments.txt"
     lst.write_text("".join(f"file '{s.resolve()}'\n" for s in segments))  # concat resolves relative to the list
     subprocess.run([ffmpeg, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(out)], check=True)

@@ -138,6 +138,18 @@ def test_user_choices_and_policy(lib, photos):
     assert c.execute("SELECT COUNT(*) FROM photos WHERE hidden=1 AND sha256 != ?", (small,)).fetchone()[0] == 1
 
 
+def test_rebuild_similar_groups(lib, photos):
+    lib.import_sync(str(photos))
+    c = lib.catalog.connect()
+    gid = c.execute("SELECT id FROM similar_groups WHERE kind='variant'").fetchone()[0]
+    lib.remove_from_group(gid, sha_of(lib, "IMG-WA0001.jpg"))  # a wrong "not a duplicate"
+    lib.set_dup_policy("hide_non_best")
+    assert c.execute("SELECT COUNT(*) FROM similar_groups").fetchone()[0] == 1
+    assert lib.rebuild_similar_groups() == 2
+    assert groups(lib)["variant"][0] == ["IMG-WA0001.jpg", "IMG_001 copy.jpg", "IMG_001.jpg"]
+    assert c.execute("SELECT COUNT(*) FROM photos WHERE hidden=1").fetchone()[0] == 2  # policy re-applied
+
+
 def test_export_uses_hardlinks(lib, photos, tmp_path):
     lib.import_sync(str(photos))
     r = lib.export_view("date", str(tmp_path / "views"))

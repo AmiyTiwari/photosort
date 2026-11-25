@@ -142,7 +142,7 @@ async function openDetail(sha) {
   const p = d.photo;
   const kv = (k, v) => (v || v === 0 ? [el("dt", {}, k), el("dd", {}, v)] : []);
   $("#detail").hidden = false;
-  $("#detail").replaceChildren(
+  $("#detail").replaceChildren(...[  // replaceChildren renders a null as the text "null": filter them out
     el("button", { class: "close", onclick: () => { $("#detail").hidden = true; state.selected = null; } }, "×"),
     el("div", { class: "photo-wrap" },
       el("img", { src: thumb(sha), alt: "", onclick: () => openLightbox(sha) }),
@@ -181,7 +181,7 @@ async function openDetail(sha) {
     } },
       el("input", { name: "factor", placeholder: "Factor" }), el("input", { name: "value", placeholder: "Group" }),
       el("button", {}, "Add")),
-  );
+  ].filter(Boolean));
 }
 
 function openLightbox(sha) {

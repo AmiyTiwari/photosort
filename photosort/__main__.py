@@ -25,7 +25,8 @@ def main() -> None:
     e.add_argument("factor", help="date | place | camera | type")
     e.add_argument("dest")
 
-    sub.add_parser("analyze", help="re-run faces, events, custom rules and questions")
+    a = sub.add_parser("analyze", help="re-run faces, events, custom rules and questions")
+    a.add_argument("--dupes", action="store_true", help="also re-detect near-duplicate groups from scratch")
     m = sub.add_parser("models", help="download local models: faces (~39 MB), CLIP (~600 MB), places (~1 MB)")
     m.add_argument("which", nargs="*", choices=["faces", "clip", "places"], help="default: all")
 
@@ -57,6 +58,8 @@ def main() -> None:
     elif args.cmd == "import":
         print(json.dumps(lib.import_sync(args.folder, args.mode), indent=2))
     elif args.cmd == "analyze":
+        if args.dupes:
+            print(f"near-duplicate groups: {lib.rebuild_similar_groups()}")
         print(json.dumps(lib.analyse_sync(), indent=2))
     elif args.cmd == "export":
         print(json.dumps(lib.export_view(args.factor, args.dest), indent=2))
