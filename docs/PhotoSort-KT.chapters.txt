@@ -1,0 +1,13 @@
+00:00  What PhotoSort is
+00:28  Architecture
+01:19  Importing a folder
+02:03  Library screen
+02:40  Duplicates
+03:12  People
+03:38  Events and places
+04:08  Content groups
+04:38  Review queue
+05:02  The assistant
+05:59  Code tour
+06:36  Tests
+06:47  Getting started
