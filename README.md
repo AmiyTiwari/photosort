@@ -5,6 +5,28 @@ Import a large set of photos, keep **one stored copy** of each unique image, and
 to the single stored copy. Near-duplicates (resized/re-saved copies, burst shots) are grouped against
 the **whole existing library**, so later imports slot into what is already there.
 
+## Watch the walkthrough
+
+[![Watch the 7-minute PhotoSort walkthrough](docs/PhotoSort-KT-poster.jpg)](https://raw.githubusercontent.com/AmiyTiwari/photosort/main/docs/PhotoSort-KT.mp4)
+
+Seven narrated minutes through every screen, the architecture and the code (click the image; it opens in your browser's player). In a clone the file is `docs/PhotoSort-KT.mp4`.
+
+| Time | Chapter |
+| --- | --- |
+| 00:00 | What PhotoSort is |
+| 00:28 | Architecture |
+| 01:19 | Importing a folder |
+| 02:03 | Library screen |
+| 02:40 | Duplicates |
+| 03:12 | People |
+| 03:38 | Events and places |
+| 04:08 | Content groups |
+| 04:38 | Review queue |
+| 05:02 | The assistant |
+| 05:59 | Code tour |
+| 06:36 | Tests |
+| 06:47 | Getting started |
+
 ## Setup
 
 Prerequisites: Python 3.10-3.13 (3.13 recommended; 3.14 has no PyTorch wheels yet), git, and about 2.5 GB of disk for the virtualenv and the models. Runs on macOS (Apple Silicon uses the GPU) and Linux; Windows is untested.
