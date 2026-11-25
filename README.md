@@ -30,7 +30,7 @@ Then in the browser: **Import** -> pick a folder of photos -> wait for the batch
 
 - **Onboarding & KT doc** (architecture with a diagram, data model, pipeline, code map, assistant internals, testing, tuning knobs, decisions, roadmap, and the KT video script): https://claude.ai/artifact/DKsVwQx7tsdNLZ9uEvj2PG
 - **Architecture drawing:** `docs/architecture.png`.
-- **KT video:** `docs/PhotoSort-KT.mp4` (7 minutes, narrated, 9 MB; chapter times in `docs/PhotoSort-KT.chapters.txt`) walks through every screen, the architecture and the code. Regenerate it with `.venv/bin/python scripts/make_kt_video.py` (needs macOS for the narration, `brew install ffmpeg`, `pip install playwright && python -m playwright install chromium`, the demo library on port 8766); it writes `media/PhotoSort-KT.mp4` and a chapter list next to it.
+- **KT video:** [docs/PhotoSort-KT.mp4](https://raw.githubusercontent.com/AmiyTiwari/photosort/main/docs/PhotoSort-KT.mp4) (7 minutes, narrated, 9 MB; chapter times in `docs/PhotoSort-KT.chapters.txt`) walks through every screen, the architecture and the code. Open that link to play it in the browser; GitHub's own file page does not preview videos of this size, it only offers *View raw*. In a clone it is at `docs/PhotoSort-KT.mp4`. Regenerate it with `.venv/bin/python scripts/make_kt_video.py` (needs macOS for the narration, `brew install ffmpeg`, `pip install playwright && python -m playwright install chromium`, the demo library on port 8766); it writes `media/PhotoSort-KT.mp4` and a chapter list next to it.
 
 ## Everyday commands
 
