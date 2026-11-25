@@ -17,3 +17,6 @@ secrets.json
 
 # demo photos from the web: rebuild with scripts/make_testdata.py
 testdata/
+
+# generated KT video and its work files
+media/

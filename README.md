@@ -26,6 +26,12 @@ Then in the browser: **Import** -> pick a folder of photos -> wait for the batch
 
 **Another machine.** Clone and repeat the steps above. To carry a library over, stop the server and copy its folder; all paths inside are relative.
 
+## Docs and knowledge transfer
+
+- **Onboarding & KT doc** (architecture with a diagram, data model, pipeline, code map, assistant internals, testing, tuning knobs, decisions, roadmap, and the KT video script): https://claude.ai/artifact/DKsVwQx7tsdNLZ9uEvj2PG
+- **Architecture drawing:** `docs/architecture.png`.
+- **KT video** (about nine narrated minutes through every screen, the architecture and the code): generated, not committed. Rebuild it with `.venv/bin/python scripts/make_kt_video.py` (needs macOS for the narration, `brew install ffmpeg`, `pip install playwright && python -m playwright install chromium`, the demo library on port 8766); it writes `media/PhotoSort-KT.mp4` and a chapter list next to it.
+
 ## Everyday commands
 
 ```bash
@@ -142,7 +148,8 @@ photosort/
   static/      index.html, app.js, style.css (no build step)
 tests/         synthetic-photo tests: dedup, groups, resume, incremental, export, API, MCP server,
                Claude Code adapter (against tests/fake_claude.py, a stand-in for the CLI)
-scripts/       make_testdata.py: downloads 70 web images and builds testdata/web_photos (git-ignored)
+scripts/       make_testdata.py (builds testdata/web_photos from the web), make_kt_video.py (records the KT video)
+docs/          architecture.png
 models/        face models (downloaded)
 library/       created at runtime: catalog.db, store/, thumbs/, faces/, secrets.json
 ```

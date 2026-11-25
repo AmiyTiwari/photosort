@@ -170,7 +170,7 @@ async function openDetail(sha) {
     d.group ? el("p", { class: "small" }, `In a ${d.group.kind} group of near-duplicates. `,
       el("button", { class: "link", onclick: () => show("dupes") }, "Review")) : null,
     el("h4", {}, `Original files (${d.sources.length})`),
-    d.sources.map((s) => el("div", { class: "src" }, s.original_path)),
+    ...d.sources.map((s) => el("div", { class: "src" }, s.original_path)),  // replaceChildren needs nodes, not an array
     el("h4", {}, "Add to a custom group"),
     el("form", { class: "row", onsubmit: async (e) => {
       e.preventDefault();
