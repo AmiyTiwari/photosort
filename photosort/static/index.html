@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhotoSort</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">PhotoSort</div>
+    <nav>
+      <button data-view="browse" class="active">Library</button>
+      <button data-view="people">People</button>
+      <button data-view="review">Review <span id="review-badge" class="badge" hidden></span></button>
+      <button data-view="dupes">Duplicates <span id="dupe-badge" class="badge" hidden></span></button>
+      <button data-view="import">Import</button>
+      <button data-view="export">Export</button>
+      <button data-view="settings">Settings</button>
+    </nav>
+    <div id="stats" class="stats"></div>
+    <button id="chat-toggle" class="primary">Assistant</button>
+  </header>
+
+  <!-- Library -->
+  <main id="view-browse" class="view">
+    <aside id="factors"></aside>
+    <section class="content">
+      <div class="toolbar">
+        <h2 id="grid-title">All photos</h2>
+        <span id="grid-count" class="muted"></span>
+        <form id="search-form" class="search"><input id="search-q" type="search"
+          placeholder="Search by what's in the photo, e.g. sunset over water" autocomplete="off"></form>
+        <label class="toggle"><input type="checkbox" id="show-hidden"> Show hidden duplicates</label>
+      </div>
+      <div id="grid" class="grid"></div>
+      <div class="more"><button id="load-more" hidden>Load more</button></div>
+    </section>
+    <aside id="detail" class="detail" hidden></aside>
+  </main>
+
+  <!-- Import -->
+  <main id="view-import" class="view page" hidden>
+    <h2>Import photos</h2>
+    <p class="muted">Originals are never modified or deleted. Each unique photo is stored once; every
+      original path is remembered as a source of it. Re-importing the same folder only processes new or changed files.</p>
+    <div class="card">
+      <label>Folder</label>
+      <div class="row">
+        <input id="import-path" placeholder="/Users/you/Pictures/Phone backup" spellcheck="false">
+        <button id="import-start" class="primary">Import</button>
+      </div>
+      <div class="row small">
+        <label><input type="radio" name="mode" value="copy" checked> Copy into library</label>
+        <label><input type="radio" name="mode" value="hardlink"> Hardlink (no extra space, same disk only)</label>
+      </div>
+      <div id="import-error" class="error" hidden></div>
+      <div class="picker">
+        <div class="picker-head"><button id="fs-up" title="Parent folder">↑</button><code id="fs-path"></code>
+          <button id="fs-use">Use this folder</button></div>
+        <ul id="fs-dirs"></ul>
+      </div>
+    </div>
+    <h3>Imports</h3>
+    <div id="batches"></div>
+  </main>
+
+  <!-- Duplicates -->
+  <main id="view-dupes" class="view page" hidden>
+    <div class="toolbar">
+      <h2>Near-duplicates</h2>
+      <span id="dupe-count" class="muted"></span>
+      <label class="toggle"><input type="checkbox" id="hide-non-best"> Hide all but the best in each group</label>
+    </div>
+    <p class="muted">Exact copies are already merged automatically. These groups are the same picture re-saved at a
+      different size/quality (<b>variant</b>) or shots taken seconds apart (<b>burst</b>). ★ marks the copy that is kept
+      visible; click another photo to choose it instead.</p>
+    <div id="groups"></div>
+    <div class="more"><button id="groups-more" hidden>Load more</button></div>
+  </main>
+
+  <!-- Export -->
+  <main id="view-export" class="view page" hidden>
+    <h2>Export folder views</h2>
+    <p class="muted">Creates a folder tree such as <code>Date/2025/December 2025/…</code> where every file is a
+      hardlink to the single stored copy, so a photo can appear in many folders without using more disk space.</p>
+    <div class="card">
+      <label>Sort by</label>
+      <select id="export-factor"></select>
+      <label>Destination folder</label>
+      <input id="export-dest" spellcheck="false">
+      <label class="small"><input type="checkbox" id="export-hidden"> Include hidden duplicates</label>
+      <div class="row"><button id="export-go" class="primary">Create view</button></div>
+      <div id="export-result" class="muted"></div>
+    </div>
+  </main>
+
+  <!-- People -->
+  <main id="view-people" class="view page wide" hidden>
+    <div class="toolbar">
+      <h2>People</h2>
+      <span id="people-count" class="muted"></span>
+      <label class="toggle"><input type="checkbox" id="people-singletons"> Include people seen only once</label>
+    </div>
+    <p id="faces-off" class="error" hidden>Face detection is off. Run <code>.venv/bin/python -m photosort models</code>,
+      then Settings → Re-analyse library.</p>
+    <div id="people-grid" class="people-grid"></div>
+    <div id="person-detail" class="card" hidden></div>
+  </main>
+
+  <!-- Review queue -->
+  <main id="view-review" class="view page" hidden>
+    <h2>Review queue</h2>
+    <p class="muted">The questions that sort the most photos per answer come first. Skipped questions are not asked again.</p>
+    <div id="questions"></div>
+  </main>
+
+  <!-- Settings -->
+  <main id="view-settings" class="view page" hidden>
+    <h2>Settings</h2>
+    <h3>Assistant model</h3>
+    <p class="muted">Use any provider: OpenAI, Google Gemini, Anthropic, OpenRouter, or a model on your own machine
+      (Ollama, LM Studio, or any OpenAI-compatible server). The model must support tool/function calling.
+      The API key is stored only on this computer, in <code>library/secrets.json</code>, readable only by you.</p>
+    <div class="card">
+      <label>Provider</label>
+      <select id="llm-preset">
+        <option value="none">None (assistant off)</option>
+        <option value="claude_code">Claude Code on this Mac (uses its login, no key)</option>
+        <option value="openai">OpenAI</option>
+        <option value="gemini">Google Gemini</option>
+        <option value="anthropic">Anthropic</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="ollama">Ollama (local)</option>
+        <option value="lmstudio">LM Studio (local)</option>
+        <option value="custom">Other OpenAI-compatible server</option>
+      </select>
+      <div id="llm-cc-note" class="small muted" hidden>Runs the <code>claude</code> command installed on this computer with
+        the model it is set to (leave Model id empty for that) — nothing else to configure.</div>
+      <label>Base URL</label>
+      <input id="llm-base" spellcheck="false">
+      <label>Model id</label>
+      <input id="llm-model" spellcheck="false" placeholder="the model name your provider uses">
+      <label>API key <span id="llm-key-state" class="muted small"></span></label>
+      <input id="llm-key" type="password" autocomplete="off" placeholder="leave empty to keep the saved key">
+      <label class="small"><input type="checkbox" id="llm-vision"> Model can see images (lets the assistant look at thumbnails)</label>
+      <label>Effort <span class="muted small">(how hard the model thinks; lower is cheaper and faster)</span></label>
+      <select id="llm-effort">
+        <option value="">Provider default</option>
+        <option value="low">low</option><option value="medium">medium</option><option value="high">high</option>
+      </select>
+      <div class="row"><button id="llm-save" class="primary">Save</button><button id="llm-test">Test connection</button>
+        <button id="llm-clear-key">Remove saved key</button></div>
+      <div id="llm-result" class="muted"></div>
+    </div>
+
+    <h3>Sorting</h3>
+    <div class="card">
+      <label>Start a new event after a gap of (hours)</label>
+      <input id="set-gap" type="number" min="0.25" step="0.5">
+      <label>Minimum photos for an event</label>
+      <input id="set-min" type="number" min="2" step="1">
+      <div class="row"><button id="set-save" class="primary">Apply</button>
+        <button id="reanalyse">Re-analyse library</button></div>
+      <div id="set-result" class="muted"></div>
+      <div id="face-state" class="small muted"></div>
+    </div>
+
+    <h3>Content groups</h3>
+    <p class="muted">Sorted by what is in the photo, using a local image-understanding model (CLIP). Describe the
+      group in a few short phrases. Answering "which of these belong?" in Review teaches it.</p>
+    <div class="card">
+      <div id="content-state" class="small muted"></div>
+      <div class="row">
+        <input id="cg-name" placeholder="Name, e.g. Birthdays">
+        <input id="cg-threshold" type="number" min="0.05" max="0.95" step="0.05" value="0.5" title="Strictness (0.05–0.95)" style="max-width:110px">
+      </div>
+      <label>Describe it (one phrase per line)</label>
+      <textarea id="cg-prompts" rows="3" spellcheck="false" placeholder="a photo of a birthday cake&#10;a photo of a birthday party"></textarea>
+      <div class="row"><button id="cg-save" class="primary">Save content group</button></div>
+      <div id="cg-result" class="muted"></div>
+      <div id="cg-list"></div>
+    </div>
+
+    <h3>Custom groups</h3>
+    <p class="muted">Rules are re-applied to every new import. The assistant can create these from plain language.</p>
+    <div class="card">
+      <div class="row">
+        <input id="cust-factor" placeholder="Factor, e.g. Family">
+        <input id="cust-value" placeholder="Group, e.g. Grandparents">
+      </div>
+      <label>Rule (JSON)</label>
+      <textarea id="cust-rule" rows="3" spellcheck="false" placeholder='{"any_person": ["Mom", "Dad"], "date_from": "2024-01-01"}'></textarea>
+      <div class="row"><button id="cust-save" class="primary">Save group</button></div>
+      <div id="cust-result" class="muted"></div>
+      <div id="cust-list"></div>
+    </div>
+  </main>
+
+  <!-- Assistant -->
+  <aside id="chat" hidden>
+    <div class="chat-head"><b>Assistant</b>
+      <span><button id="chat-reset" class="link">New chat</button> <button id="chat-close" class="close">×</button></span></div>
+    <div id="chat-log"></div>
+    <div id="chat-choices" class="chips"></div>
+    <form id="chat-form"><input id="chat-input" placeholder="e.g. put photos of Mom and Dad in a Family group" autocomplete="off">
+      <button class="primary">Send</button></form>
+  </aside>
+
+  <div id="lightbox" hidden><img alt=""></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# machine-specific
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+
+# downloaded models (re-fetch with: python -m photosort models)
+models/
+
+# photo libraries: data, not code (each is a self-contained folder)
+library/
+library_*/
+
+# never commit an API key
+secrets.json
+
+# demo photos from the web: rebuild with scripts/make_testdata.py
+testdata/
